@@ -1,0 +1,97 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  /* Hide scrollbar for IE, Edge and Firefox */
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 1rem);
+  }
+}
+
+/* Tahap 4: Modern, Futuristic & Clean Light Theme Design System */
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Modern Card with Soft Radius & Subtle Shadow */
+.card-modern {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: 1.25rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-modern:hover {
+  border-color: rgba(203, 213, 225, 0.9);
+  box-shadow: 0 4px 20px -2px rgba(99, 102, 241, 0.08);
+}
+
+/* Glass Panels (Clean Light) */
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+/* Backward compatibility for dark glass components if needed */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+.glass-card {
+  background: #ffffff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+/* Futuristic Gradients & Micro-Glow */
+.glow-accent {
+  box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.25);
+}
+
+/* Custom Clean Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

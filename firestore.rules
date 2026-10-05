@@ -1,0 +1,142 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny all documents
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isCurrentUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Bootstrapped Super Admin from runtime metadata
+    function isBootstrappedAdmin() {
+      return isVerified() && request.auth.token.email == 'avinaariesta9@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrappedAdmin() || 
+        (isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    function isSuperAdmin() {
+      return isBootstrappedAdmin() || 
+        (isSignedIn() && 
+         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'Super Admin');
+    }
+
+    function getUserCampus() {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) ?
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.campusId : '';
+    }
+
+    function isCampusAdmin(cid) {
+      return isSuperAdmin() || (isAdmin() && (getUserCampus() == cid || getUserCampus() == 'all'));
+    }
+
+    // Campuses Collection (Multi-Campus & Dynamic Branding)
+    match /campuses/{campusId} {
+      allow read: if isSignedIn() && isValidId(campusId);
+      allow create, delete: if isSuperAdmin() && isValidId(campusId);
+      allow update: if isValidId(campusId) && 
+                    (isSuperAdmin() || (isAdmin() && (getUserCampus() == campusId || getUserCampus() == existing().campusId)));
+    }
+
+    // Users Collection (isolated per campus except Super Admin)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isCurrentUser(userId) || isCampusAdmin(existing().campusId));
+      allow list: if isAdmin();
+      allow create: if isSignedIn() && isValidId(userId) && isCurrentUser(userId) && 
+                    incoming().uid == request.auth.uid &&
+                    incoming().campusId is string &&
+                    incoming().name is string && incoming().name.size() <= 120 &&
+                    incoming().email is string && incoming().email.size() <= 256;
+      allow update: if isValidId(userId) && (
+        (isCurrentUser(userId) && incoming().uid == request.auth.uid && 
+         incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'updatedAt'])) ||
+        isCampusAdmin(existing().campusId)
+      );
+      allow delete: if isSuperAdmin() && isValidId(userId);
+    }
+
+    // Students Collection (isolated by campusId)
+    match /students/{studentId} {
+      allow get: if isSignedIn() && isValidId(studentId) && 
+                 (isSuperAdmin() || 
+                  (isAdmin() && existing().campusId == getUserCampus()) || 
+                  existing().email == request.auth.token.email);
+      allow list: if isSignedIn() && (isAdmin() || resource.data.email == request.auth.token.email);
+      allow create, update, delete: if isSignedIn() && isValidId(studentId) && 
+                                   (isSuperAdmin() || (isAdmin() && incoming().campusId == getUserCampus()));
+    }
+
+    // Lecturers Collection (isolated by campusId)
+    match /lecturers/{lecturerId} {
+      allow read: if isSignedIn() && isValidId(lecturerId) && 
+                  (isSuperAdmin() || existing().campusId == getUserCampus() || getUserCampus() == 'all');
+      allow write: if isSignedIn() && isValidId(lecturerId) && 
+                   (isSuperAdmin() || (isAdmin() && incoming().campusId == getUserCampus()));
+    }
+
+    // Courses Collection (isolated by campusId)
+    match /courses/{courseId} {
+      allow read: if isSignedIn() && isValidId(courseId) && 
+                  (isSuperAdmin() || existing().campusId == getUserCampus() || getUserCampus() == 'all');
+      allow write: if isSignedIn() && isValidId(courseId) && 
+                   (isSuperAdmin() || (isAdmin() && incoming().campusId == getUserCampus()));
+    }
+
+    // Schedules Collection (isolated by campusId)
+    match /schedules/{scheduleId} {
+      allow read: if isSignedIn() && isValidId(scheduleId) && 
+                  (isSuperAdmin() || existing().campusId == getUserCampus() || getUserCampus() == 'all');
+      allow write: if isSignedIn() && isValidId(scheduleId) && 
+                   (isSuperAdmin() || (isAdmin() && incoming().campusId == getUserCampus()));
+    }
+
+    // Announcements Collection (isolated by campusId)
+    match /announcements/{announcementId} {
+      allow read: if isSignedIn() && isValidId(announcementId) && 
+                  (isSuperAdmin() || existing().campusId == getUserCampus() || getUserCampus() == 'all');
+      allow write: if isSignedIn() && isValidId(announcementId) && 
+                   (isSuperAdmin() || (isAdmin() && incoming().campusId == getUserCampus()));
+    }
+
+    // Media Carousel Slides Collection
+    match /mediaSlides/{slideId} {
+      allow read: if isSignedIn() && isValidId(slideId);
+      allow write: if isAdmin() && isValidId(slideId);
+    }
+
+    // Trusted Admins Collection (RBAC)
+    match /admins/{adminId} {
+      allow read: if isAdmin() && isValidId(adminId);
+      allow write: if isSuperAdmin() && isValidId(adminId);
+    }
+  }
+}

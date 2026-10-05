@@ -1,0 +1,6 @@
+{
+  "name": "NusaCampus - Super App Mahasiswa",
+  "description": "Campus Super App modern, futuristik, dan clean untuk mahasiswa: Jadwal Kuliah, KRS/KHS, Tugas & Ujian, Pengumuman, Berita, dan KTM Digital.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
